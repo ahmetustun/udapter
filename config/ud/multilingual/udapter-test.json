@@ -1,0 +1,166 @@
+{
+  "dataset_reader": {
+    "lazy": false,
+    "use_lang_ids": true,
+    "token_indexers": {
+      "tokens": {
+        "type": "single_id",
+        "lowercase_tokens": true
+      },
+      "bert": {
+        "type": "udapter-bert",
+        "in_lang_list": "languages/in-langs.txt",
+        "oov_lang_list": "languages/oov-langs.txt",
+        "pretrained_model": "config/archive/bert-base-multilingual-cased/vocab.txt",
+        "do_lowercase": false,
+        "use_starting_offsets": true
+      }
+    }
+  },
+  "train_data_path": "data/test/sample.conllu",
+  "validation_data_path": "data/test/sample.conllu",
+  "test_data_path": "data/test/sample.conllu",
+  "vocabulary": {
+    "directory_path": "data/vocab/sample/vocabulary"
+  },
+  "model": {
+    "type": "udapter_model",
+    "pretrained_model": "bert-base-multilingual-cased",
+    "word_dropout": 0.2,
+    "layer_dropout": 0.1,
+    "tasks": ["deps"],
+    "text_field_embedder": {
+      "type": "udify_embedder",
+      "dropout": 0.5,
+      "allow_unmatched_keys": true,
+      "embedder_to_indexer_map": {
+        "bert": ["bert", "bert-offsets", "bert-lang-ids"]
+      },
+      "token_embedders": {
+        "bert": {
+          "type": "udapter-bert",
+          "pretrained_model": "bert-base-multilingual-cased",
+          "bert_config_file": "adapter_bert/configs/adapter-bert.json",
+          "bert_requires_grad": false,
+          "adapters_requires_grad": true,
+          "dropout": 0.15,
+          "layer_dropout": 0.1,
+          "combine_layers": "last",
+          "use_adapter": true,
+          "adapter_size": 256,
+          "adapter_prediction": "single",
+          "num_adapters": 1,
+          "use_language_emb": true,
+          "in_languages": "languages/in-langs.txt",
+          "oov_languages": "languages/oov-langs.txt",
+          "language_emb_size": 32,
+          "language_emb_dropout": 0.1,
+          "language_one_hot": false,
+          "num_language_features": 289,
+          "language_drop_rate": 0.2,
+	      "language_features": "syntax_knn+phonology_knn+inventory_knn",
+          "num_languages": 5,
+          "language_emb_from_features": true
+	}
+      }
+    },
+    "encoder": {
+      "type": "pass_through",
+      "input_dim": 768
+    },
+    "decoders": {
+      "upos": {
+        "type": "udapter_tag_decoder",
+        "encoder": {
+          "type": "pass_through",
+          "input_dim": 768
+        },
+        "png_params_dim": 32
+      },
+      "feats": {
+        "encoder": {
+          "type": "pass_through",
+          "input_dim": 768
+        },
+        "adaptive": false
+      },
+      "lemmas": {
+        "encoder": {
+          "type": "pass_through",
+          "input_dim": 768
+        },
+        "adaptive": false
+      },
+      "deps": {
+        "type": "udapter_dependency_decoder",
+        "png_params_dim": 32,
+        "tag_representation_dim": 256,
+        "arc_representation_dim": 768,
+        "encoder": {
+          "type": "pass_through",
+          "input_dim": 768
+        }
+      }
+    }
+  },
+  "iterator": {
+    "type": "lang-bucket",
+    "sorting_keys": [["tokens", "num_tokens"]],
+    "biggest_batch_first": true,
+    "batch_size": 32,
+    "maximum_samples_per_batch": ["num_tokens", 32 * 100]
+  },
+  "trainer": {
+    "num_epochs": 5,
+    "patience": 5,
+    "num_serialized_models_to_keep": 10,
+    "keep_serialized_model_every_num_seconds": 2 * 60 * 60,
+    "model_save_interval": 1 * 60 * 60,
+    "should_log_learning_rate": true,
+    "should_log_parameter_statistics": true,
+    "summary_interval": 2500,
+    "optimizer": {
+      "type": "bert_adam",
+      "b1": 0.9,
+      "b2": 0.99,
+      "weight_decay": 0.01,
+      "lr": 1e-3,
+      "parameter_groups": [
+        [["^text_field_embedder.*.bert_model.embeddings",
+          "^text_field_embedder.*.bert_model.*.attention.self",
+          "^text_field_embedder.*.bert_model.*.intermediate",
+          "^text_field_embedder.*.bert_model.*.output.LayerNorm",
+          "^text_field_embedder.*.bert_model.*.output.dense"], {}],
+        [["^text_field_embedder.*.adapter",
+          "^text_field_embedder.*.language_embedder",
+          "^text_field_embedder.*._scalar_mix",
+          "^text_field_embedder.*.pooler",
+          "^scalar_mix",
+          "^decoders",
+          "^shared_encoder"], {}]
+      ]
+    },
+    "learning_rate_scheduler": {
+      "type": "ulmfit_sqrt",
+      "model_size": 1,
+      "warmup_steps": 9000,
+      "start_step": 0,
+      "factor": 5.0,
+      "gradual_unfreezing": false,
+      "discriminative_fine_tuning": false,
+      "decay_factor": 0.005
+    }
+  },
+  "udify_replace": [
+    "dataset_reader.token_indexers",
+    "model.text_field_embedder",
+    "model.encoder",
+    "model.decoders.xpos",
+    "model.decoders.deps.encoder",
+    "model.decoders.upos.encoder",
+    "model.decoders.feats.encoder",
+    "model.decoders.lemmas.encoder",
+    "trainer.learning_rate_scheduler",
+    "trainer.optimizer"
+  ]
+}
