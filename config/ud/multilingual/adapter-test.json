@@ -2,7 +2,7 @@
   "dataset_reader": {
     "lazy": false,
     "use_lang_ids": true,
-    "use_separate_feats": false,
+    "use_separate_feats": true,
     "token_indexers": {
       "tokens": {
         "type": "single_id",
@@ -18,11 +18,11 @@
       }
     }
   },
-  "train_data_path": "data/test/train.conllu",
-  "validation_data_path": "data/test/dev.conllu",
-  "test_data_path": "data/test/test.conllu",
+  "train_data_path": "data/test/sample.feat.conllu",
+  "validation_data_path": "data/test/sample.feat.conllu",
+  "test_data_path": "data/test/sample.feat.conllu",
   "vocabulary": {
-    "directory_path": "data/vocab/test/vocabulary"
+    "directory_path": "data/vocab/sample.feat/vocabulary"
   },
   "model": {
     "type": "udapter_model",
@@ -48,10 +48,10 @@
           "layer_dropout": 0.1,
           "combine_layers": "last",
           "use_adapter": true,
-          "adapter_size": 256,
+          "adapter_size": 1024,
           "adapter_prediction": "single",
           "num_adapters": 1,
-          "use_language_emb": true,
+          "use_language_emb": false, //to use only adapter without parameter-generator/language-embeddings
           "in_languages": "languages/in-langs.txt",
           "oov_languages": "languages/oov-langs.txt",
           "language_emb_size": 32,

@@ -26,7 +26,6 @@ def createJob(name, cmd):
     outFile.write(". /software/software/Anaconda3/5.3.0/etc/profile.d/conda.sh\n")
     outFile.write("conda deactivate\n")
     outFile.write("conda activate allennlp\n")
-    outFile.write("conda activate allennlp\n")
     for c in cmd:
         outFile.write(c + "\n")
     outFile.close()

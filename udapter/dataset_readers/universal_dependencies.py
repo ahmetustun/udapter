@@ -1,7 +1,7 @@
 """
 A Dataset Reader for Universal Dependencies, with support for multiword tokens and special handling for NULL "_" tokens
 """
-
+from collections import OrderedDict
 from typing import Dict, Tuple, List, Any, Callable
 
 from overrides import overrides
@@ -16,6 +16,7 @@ from allennlp.data.tokenizers import Token
 
 from udapter.dataset_readers.lemma_edit import gen_lemma_rule
 
+import json
 import logging
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -35,9 +36,14 @@ class UniversalDependenciesDatasetReader(DatasetReader):
     def __init__(self,
                  token_indexers: Dict[str, TokenIndexer] = None,
                  lazy: bool = False,
-                 use_lang_ids: bool = False) -> None:
+                 use_lang_ids: bool = False,
+                 use_separate_feats: bool = False,
+                 ud_feats_schema: str = 'config/ud/feats.json') -> None:
         super().__init__(lazy)
         self.use_lang_ids = use_lang_ids
+        self.use_separate_feats = use_separate_feats
+        with open(ud_feats_schema, "r") as fin:
+            self.ud_feats_schema = json.load(fin)
         self._token_indexers = token_indexers or {'tokens': SingleIdTokenIndexer()}
 
     @overrides
@@ -85,7 +91,7 @@ class UniversalDependenciesDatasetReader(DatasetReader):
                 langs = get_field("lang")
 
                 yield self.text_to_instance(words, lemmas, lemma_rules, upos_tags, xpos_tags,
-                                            feats, dependencies, ids, multiword_ids, multiword_forms, langs)
+                                            feats, get_field("feats"), dependencies, ids, multiword_ids, multiword_forms, langs)
 
     @overrides
     def text_to_instance(self,  # type: ignore
@@ -95,6 +101,7 @@ class UniversalDependenciesDatasetReader(DatasetReader):
                          upos_tags: List[str] = None,
                          xpos_tags: List[str] = None,
                          feats: List[str] = None,
+                         separate_feats: List[Dict[str, str]] = None,
                          dependencies: List[Tuple[str, int]] = None,
                          ids: List[str] = None,
                          multiword_ids: List[str] = None,
@@ -124,6 +131,22 @@ class UniversalDependenciesDatasetReader(DatasetReader):
             fields["head_indices"] = SequenceLabelField([int(x[1]) for x in dependencies],
                                                         tokens,
                                                         label_namespace="head_index_tags")
+
+        if self.use_separate_feats:
+            feature_seq = []
+            for feat_set in separate_feats:
+                dimensions = {dimension.replace('[','_').replace(']','_'): "_" for dimension in self.ud_feats_schema}
+
+                if feat_set != "_":
+                    for dimension in feat_set:
+                        dimensions[dimension.replace('[','_').replace(']','_')] = feat_set[dimension]
+
+                feature_seq.append(dimensions)
+
+            for dimension in self.ud_feats_schema:
+                d = dimension.replace('[','_').replace(']','_')
+                labels = [f[d] for f in feature_seq]
+                fields[d] = SequenceLabelField(labels, tokens, label_namespace=d)
 
         fields["metadata"] = MetadataField({
             "words": words,

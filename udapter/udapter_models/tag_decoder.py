@@ -93,7 +93,7 @@ class TagDecoder(Model):
         self.label_smoothing = label_smoothing
         self.num_classes = self.vocab.get_vocab_size(task)
         self.adaptive = adaptive
-        self.features = features if features else []
+        self.features = [f.replace('[','_').replace(']','_') for f in features] if features else []
 
         self.metrics = {
             "acc": CategoricalAccuracy(),
@@ -138,7 +138,7 @@ class TagDecoder(Model):
         loss_fn = self._adaptive_loss if self.adaptive else self._loss
 
         output_dict = loss_fn(hidden, mask, gold_tags[self.task], output_dim, pgn_vector)
-        self._features_loss(hidden, mask, gold_tags, output_dict)
+        self._features_loss(hidden, mask, gold_tags, output_dict, pgn_vector)
 
         return output_dict
 
@@ -177,12 +177,12 @@ class TagDecoder(Model):
 
         return output_dict
 
-    def _features_loss(self, hidden, mask, gold_tags, output_dict):
+    def _features_loss(self, hidden, mask, gold_tags, output_dict, pgn_vector):
         if gold_tags is None:
             return
 
         for feature in self.features:
-            logits = self.feature_outputs[feature](hidden)
+            logits = self.feature_outputs[feature](hidden, pgn_vector)
             loss = sequence_cross_entropy_with_logits(logits,
                                                       gold_tags[feature],
                                                       mask,

@@ -1,31 +1,28 @@
 {
   "dataset_reader": {
     "lazy": false,
-    "use_lang_ids": true,
-    "use_separate_feats": false,
+    "use_separate_feats": true,
     "token_indexers": {
       "tokens": {
         "type": "single_id",
         "lowercase_tokens": true
       },
       "bert": {
-        "type": "udapter-bert",
-        "in_lang_list": "languages/in-langs.txt",
-        "oov_lang_list": "languages/oov-langs.txt",
+        "type": "udify-bert-pretrained",
         "pretrained_model": "config/archive/bert-base-multilingual-cased/vocab.txt",
         "do_lowercase": false,
         "use_starting_offsets": true
       }
     }
   },
-  "train_data_path": "data/test/train.conllu",
-  "validation_data_path": "data/test/dev.conllu",
-  "test_data_path": "data/test/test.conllu",
+  "train_data_path": "data/test/sample.feat.conllu",
+  "validation_data_path": "data/test/sample.feat.conllu",
+  "test_data_path": "data/test/sample.feat.conllu",
   "vocabulary": {
-    "directory_path": "data/vocab/test/vocabulary"
+    "directory_path": "data/vocab/sample.feat/vocabulary"
   },
   "model": {
-    "type": "udapter_model",
+    "type": "udify_model",
     "pretrained_model": "bert-base-multilingual-cased",
     "word_dropout": 0.2,
     "layer_dropout": 0.1,
@@ -35,33 +32,16 @@
       "dropout": 0.5,
       "allow_unmatched_keys": true,
       "embedder_to_indexer_map": {
-        "bert": ["bert", "bert-offsets", "bert-lang-ids"]
+        "bert": ["bert", "bert-offsets"]
       },
       "token_embedders": {
         "bert": {
-          "type": "udapter-bert",
+          "type": "udify-bert-pretrained",
           "pretrained_model": "bert-base-multilingual-cased",
-          "bert_config_file": "adapter_bert/configs/adapter-bert.json",
-          "bert_requires_grad": false,
-          "adapters_requires_grad": true,
-          "dropout": 0.15,
+          "requires_grad": true,
+          "dropout": 0.2,
           "layer_dropout": 0.1,
-          "combine_layers": "last",
-          "use_adapter": true,
-          "adapter_size": 256,
-          "adapter_prediction": "single",
-          "num_adapters": 1,
-          "use_language_emb": true,
-          "in_languages": "languages/in-langs.txt",
-          "oov_languages": "languages/oov-langs.txt",
-          "language_emb_size": 32,
-          "language_emb_dropout": 0.1,
-          "language_one_hot": false,
-          "num_language_features": 289,
-          "language_drop_rate": 0.2,
-	      "language_features": "syntax_knn+phonology_knn+inventory_knn",
-          "num_languages": 5,
-          "language_emb_from_features": true
+          "combine_layers": "last"
 	}
       }
     },
@@ -71,16 +51,13 @@
     },
     "decoders": {
       "upos": {
-        "type": "udapter_tag_decoder",
         "encoder": {
           "type": "pass_through",
           "input_dim": 768
         },
-        "png_params_dim": 32
+        "adaptive": false
       },
       "feats": {
-        "type": "udapter_tag_decoder",
-        "png_params_dim": 32,
         "encoder": {
           "type": "pass_through",
           "input_dim": 768
@@ -99,8 +76,6 @@
         "adaptive": false
       },
       "deps": {
-        "type": "udapter_dependency_decoder",
-        "png_params_dim": 32,
         "tag_representation_dim": 256,
         "arc_representation_dim": 768,
         "encoder": {
@@ -111,9 +86,6 @@
     }
   },
   "iterator": {
-    "type": "lang-bucket",
-    "sorting_keys": [["tokens", "num_tokens"]],
-    "biggest_batch_first": true,
     "batch_size": 32,
     "maximum_samples_per_batch": ["num_tokens", 32 * 100]
   },
@@ -151,8 +123,8 @@
       "warmup_steps": 3000,
       "start_step": 0,
       "factor": 5.0,
-      "gradual_unfreezing": false,
-      "discriminative_fine_tuning": false,
+      "gradual_unfreezing": true,
+      "discriminative_fine_tuning": true,
       "decay_factor": 0.05
     }
   },
@@ -166,7 +138,6 @@
     "model.decoders.feats.encoder",
     "model.decoders.lemmas.encoder",
     "trainer.learning_rate_scheduler",
-    "trainer.optimizer",
-    "vocabulary.directory_path"
+    "trainer.optimizer"
   ]
 }

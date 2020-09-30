@@ -149,7 +149,7 @@ class UdapterModel(Model):
                 for key in ["heads", "head_tags", "arc_loss", "tag_loss", "mask"]:
                     output_dict[key] = pred_output[key]
             else:
-                pred_output = self.decoders[task](decoder_input, mask, gold_tags, metadata)
+                pred_output = self.decoders[task](decoder_input, mask, gold_tags, language_emb, metadata)
 
                 logits[task] = pred_output["logits"]
                 class_probabilities[task] = pred_output["class_probabilities"]
@@ -166,6 +166,7 @@ class UdapterModel(Model):
             output_dict["ids"] = [x["ids"] for x in metadata if "ids" in x]
             output_dict["multiword_ids"] = [x["multiword_ids"] for x in metadata if "multiword_ids" in x]
             output_dict["multiword_forms"] = [x["multiword_forms"] for x in metadata if "multiword_forms" in x]
+            output_dict["langs"] = [x["langs"] for x in metadata]
 
         return output_dict
 
@@ -249,11 +250,6 @@ class UdapterModel(Model):
         return metrics
 
     def _count_params(self):
-
-        for name, parameter in self.named_parameters():
-            if parameter.requires_grad:
-                logger.info(f'AHMET ==== {name}:{parameter.numel()}')
-
         self.total_params = sum(p.numel() for p in self.parameters())
         self.total_train_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
 

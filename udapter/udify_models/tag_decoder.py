@@ -98,7 +98,7 @@ class TagDecoder(Model):
         self.label_smoothing = label_smoothing
         self.num_classes = self.vocab.get_vocab_size(task)
         self.adaptive = adaptive
-        self.features = features if features else []
+        self.features = [f.replace('[','_').replace(']','_') for f in features] if features else []
 
         self.use_lang_feedforward = use_lang_feedforward
         if self.lang_embedding is not None and use_lang_feedforward:

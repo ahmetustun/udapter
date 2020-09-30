@@ -89,5 +89,4 @@ class UlmfitSqrtLR(LearningRateScheduler):
         step = max(self.last_epoch - self.start_step, 1)
         scale = self.factor * (self.model_size ** (-0.5) *
                                min(step ** (-self.steepness), step * self.warmup_steps ** (-self.steepness - 1)))
-
         return [scale * lr for lr in self.base_values]

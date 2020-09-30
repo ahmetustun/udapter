@@ -42,6 +42,6 @@ def createJob(name, cmd):
 
 
 model = sys.argv[1]
-name = os.path.split(os.path.split(model)[0]) + '.resume'
+name = os.path.split(os.path.split(model)[0])[1] + '.resume'
 cmd = 'python train.py --resume ' + model
 createJob(name, cmd)

@@ -1,6 +1,6 @@
 # UDapter
 
-The project is built on [UDify](https://github.com/Hyperparticle/udify) using [AllenNLP](https://allennlp.org/) and [Huggingface Transformers](https://github.com/huggingface/transformers).
+This project is built on [UDify](https://github.com/Hyperparticle/udify) using [AllenNLP](https://allennlp.org/) and [Huggingface Transformers](https://github.com/huggingface/transformers). The code is tested on Python v3.6 
 
 ## Getting Started
 
@@ -9,15 +9,7 @@ Install the Python packages in `requirements.txt`.
 pip install -r ./requirements.txt
 ```
 
-Download the UD corpus by running the script
-
-```bash
-bash ./scripts/download_ud_data.sh
-```
-
-or alternatively download the data from [universaldependencies.org](https://universaldependencies.org/) and extract 
-into `data/ud-treebanks-v2.3/`, then run `scripts/concat_ud_data.sh` to generate the multilingual UD dataset with language ids.
-
+After downloading the UD corpus from [universaldependencies.org](https://universaldependencies.org/), please run `scripts/concat_ud_data.sh` with `--add_lang_id` to generate the multilingual UD dataset with language ids.
 
 ### Training the Model
 
@@ -26,22 +18,10 @@ dataset is generated with `scripts/concat_ud_data.sh`. To indicate training and 
 run the command
 
 ```bash
-python train.py --config config/ud/udapter/udapter-test.json --name udapter
+python train.py --config config/ud/multilingual/udapter-test.json --name udapter
 ```
 
-### Viewing Model Performance
-
-One can view how well the models are performing by running TensorBoard
-
-```bash
-tensorboard --logdir logs
-```
-
-This should show the currently trained model as well as any other previously trained models. The model will be stored 
-in a folder specified by the `--name` parameter as well as a date stamp, e.g., `logs/udapter/2020.05.01_00.00.01`.
-
-
-## Predicting Universal Dependencies from a Trained Model
+### Predicting Universal Dependencies from a Trained Model
 
 To predict UD annotations, one can supply the path to the trained model and an input `conllu`-formatted file with a language id as the last column. To split concatenated treebanks with language id, use `scripts/split_file_by_lang.py`. For prediction: 
 
@@ -49,10 +29,14 @@ To predict UD annotations, one can supply the path to the trained model and an i
 python predict.py <archive> <input.conllu> <output.conllu> [--eval_file results.json]
 ```
 
-## Configuration Options
+## Citing This Research
 
-1. One can specify the type of device to run on. For a single GPU, use the flag `--device 0`, or `--device -1` for CPU.
-2. To skip waiting for the dataset to be fully loaded into memory, use the flag `--lazy`. 
-Note that the dataset won't be shuffled.
-3. Resume an existing training run with `--resume <archive_dir>`.
-4. Specify a config file with `--config <config_file>`.
+If you use UDify for your research, please cite this work as:
+
+```latex
+@inproceedings{ustun2020udapter,
+    title={UDapter: Language Adaptation for Truly Universal Dependency Parsing},
+    author={{\"U}st{\"u}n, Ahmet and Bisazza, Arianna and Bouma, Gosse and van Noord, Gertjan},
+    booktitle = {Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)},
+    year = {2020}
+}

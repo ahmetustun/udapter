@@ -21,7 +21,6 @@ from __future__ import print_function
 import os
 import re
 import argparse
-import tensorflow as tf
 import torch
 import numpy as np
 

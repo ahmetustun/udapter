@@ -192,7 +192,7 @@ class UdifyModel(Model):
             device = tokens.device
 
             # This creates a mask that only considers unpadded tokens for mapping to oov
-            padding_mask = torch.ones(tokens.size(), dtype=torch.bool).to(device)
+            padding_mask = torch.ones(tokens.size(), dtype=torch.uint8).to(device)
             for pad in padding_tokens:
                 padding_mask &= tokens != pad
 
@@ -230,6 +230,7 @@ class UdifyModel(Model):
         return metrics
 
     def _count_params(self):
+
         self.total_params = sum(p.numel() for p in self.parameters())
         self.total_train_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
 

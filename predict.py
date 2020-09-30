@@ -31,7 +31,7 @@ parser.add_argument("--lazy", action="store_true", help="Lazy load dataset")
 
 args = parser.parse_args()
 
-import_submodules("udify")
+import_submodules("udapter")
 
 archive_dir = Path(args.archive).resolve().parent
 
@@ -50,8 +50,8 @@ configs = [Params(overrides), Params.from_file(config_file)]
 params = util.merge_configs(configs)
 
 if not args.eval_file:
-    util.predict_model_with_archive("udify_predictor", params, archive_dir, args.input_file, args.pred_file,
+    util.predict_model_with_archive("udapter_predictor", params, archive_dir, args.input_file, args.pred_file,
                                     batch_size=args.batch_size)
 else:
-    util.predict_and_evaluate_model_with_archive("udify_predictor", params, archive_dir, args.input_file,
+    util.predict_and_evaluate_model_with_archive("udapter_predictor", params, archive_dir, args.input_file,
                                                  args.pred_file, args.eval_file, batch_size=args.batch_size)
