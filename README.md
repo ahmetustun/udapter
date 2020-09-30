@@ -1,5 +1,11 @@
 # UDapter
 
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+UDapter is a multilingual dependency parser that uses "contextual" adapters together with language-typology features for language-specific adaptation. This repository includes the code for "[UDapter: Language Adaptation for Truly Universal Dependency Parsing](https://arxiv.org/abs/2004.14327)" 
+
+[![UDify Model Architecture](docs/model.png)](https://arxiv.org/pdf/1904.02099.pdf)
+
 This project is built on [UDify](https://github.com/Hyperparticle/udify) using [AllenNLP](https://allennlp.org/) and [Huggingface Transformers](https://github.com/huggingface/transformers). The code is tested on Python v3.6 
 
 ## Getting Started
