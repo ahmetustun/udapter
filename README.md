@@ -43,6 +43,6 @@ If you use UDify for your research, please cite this work as:
 @inproceedings{ustun2020udapter,
     title={UDapter: Language Adaptation for Truly Universal Dependency Parsing},
     author={{\"U}st{\"u}n, Ahmet and Bisazza, Arianna and Bouma, Gosse and van Noord, Gertjan},
-    booktitle = {Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)},
+    booktitle = {Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing},
     year = {2020}
 }
