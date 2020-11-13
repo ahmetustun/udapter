@@ -40,9 +40,18 @@ python predict.py <archive> <input.conllu> <output.conllu> [--eval_file results.
 If you use UDify for your research, please cite this work as:
 
 ```latex
-@inproceedings{ustun2020udapter,
-    title={UDapter: Language Adaptation for Truly Universal Dependency Parsing},
-    author={{\"U}st{\"u}n, Ahmet and Bisazza, Arianna and Bouma, Gosse and van Noord, Gertjan},
-    booktitle = {Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing},
-    year = {2020}
+@inproceedings{ustun-etal-2020-udapter,
+    title = "{UD}apter: Language Adaptation for Truly {U}niversal {D}ependency Parsing",
+    author = {{\"U}st{\"u}n, Ahmet  and
+      Bisazza, Arianna  and
+      Bouma, Gosse  and
+      van Noord, Gertjan},
+    booktitle = "Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)",
+    month = nov,
+    year = "2020",
+    address = "Online",
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/2020.emnlp-main.180",
+    pages = "2302--2315",
+    abstract = "Recent advances in multilingual dependency parsing have brought the idea of a truly universal parser closer to reality. However, cross-language interference and restrained model capacity remain major obstacles. To address this, we propose a novel multilingual task adaptation approach based on contextual parameter generation and adapter modules. This approach enables to learn adapters via language embeddings while sharing model parameters across languages. It also allows for an easy but effective integration of existing linguistic typology features into the parsing network. The resulting parser, UDapter, outperforms strong monolingual and multilingual baselines on the majority of both high-resource and low-resource (zero-shot) languages, showing the success of the proposed adaptation approach. Our in-depth analyses show that soft parameter sharing via typological features is key to this success.",
 }
