@@ -147,9 +147,9 @@
     },
     "learning_rate_scheduler": {
       "type": "ulmfit_sqrt",
-      "model_size": 3000,
+      "model_size": 1,
       "warmup_steps": 3000,
-      "start_step": 0,
+      "start_step": 3000,
       "factor": 5.0,
       "gradual_unfreezing": false,
       "discriminative_fine_tuning": false,
