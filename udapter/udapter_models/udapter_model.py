@@ -44,6 +44,7 @@ class UdapterModel(Model):
                  mix_embedding: int = None,
                  layer_dropout: int = 0.0,
                  seperate_lang_emb: bool = False,
+                 typo_predict: bool = False,
                  initializer: InitializerApplicator = InitializerApplicator(),
                  regularizer: Optional[RegularizerApplicator] = None) -> None:
         super(UdapterModel, self).__init__(vocab, regularizer)
@@ -58,6 +59,7 @@ class UdapterModel(Model):
         self.decoders = torch.nn.ModuleDict(decoders)
 
         self.seperate_lang_emb = seperate_lang_emb
+        self.typo_predict = typo_predict
 
         if not self.seperate_lang_emb:
             self.language_embedder = self.text_field_embedder.token_embedder_bert.language_embedder
@@ -119,7 +121,9 @@ class UdapterModel(Model):
         self._apply_token_dropout(tokens)
 
         embedded_text_input = self.text_field_embedder(tokens)
-        language_emb = self.language_embedder(next(iter(tokens['bert-lang-ids']))).to(embedded_text_input.device)
+        language_emb, (typo_loss, masked_lang_vector, predicted_lang_vector) = self.language_embedder.get_language_emb(next(iter(tokens['bert-lang-ids'])), update=True)
+
+        language_emb = language_emb.to(embedded_text_input.device)
 
         if self.post_encoder_embedder:
             post_embeddings = self.post_encoder_embedder(tokens)
@@ -131,6 +135,8 @@ class UdapterModel(Model):
         output_dict = {"logits": logits,
                        "class_probabilities": class_probabilities}
         loss = 0
+        if self.typo_predict:
+            loss += typo_loss
 
         # Run through each of the tasks on the shared encoder and save predictions
         for task in self.tasks:

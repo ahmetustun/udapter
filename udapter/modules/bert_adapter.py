@@ -519,7 +519,7 @@ class BertEmbedder(TokenEmbedder):
         if not lang_ids is None:
             lang_set = set(lang_ids.flatten().tolist())
             assert len(lang_set) == 1, 'not all tokens from same language in a batch'
-            lang_embedding = self.language_embedder(next(iter(lang_ids)))
+            lang_embedding, _ = self.language_embedder.get_language_emb(next(iter(lang_ids)))
 
         # input_ids may have extra dimensions, so we reshape down to 2-d
         # before calling the BERT model and then reshape back at the end.
@@ -621,7 +621,10 @@ class UdifyPretrainedBertEmbedder(BertEmbedder):
                  language_drop_rate: float = 0.2,
                  language_features: str = "syntax_knn",
                  language_emb_from_features: bool = True,
-                 l2v_letter_codes: str ='languages/letter_codes.json') -> None:
+                 l2v_letter_codes: str ='languages/letter_codes.json',
+                 typo_mask: bool = False,
+                 typo_mask_ratio: float = 0.3,
+                 typo_loss_weight: float = 0.5) -> None:
 
         bert_config = BertConfig.from_json_file(bert_config_file)
 
@@ -639,6 +642,10 @@ class UdifyPretrainedBertEmbedder(BertEmbedder):
         bert_config.language_features = language_features
         bert_config.one_hot = language_one_hot
         bert_config.nl_project = nonlinear_project
+
+        bert_config.typo_mask = typo_mask
+        bert_config.typo_mask_ratio = typo_mask_ratio
+        bert_config.typo_loss_weight = typo_loss_weight
 
         model = BertModel.from_pretrained(pretrained_model, config=bert_config)
 

@@ -18,4 +18,4 @@ class LanguageEmbeddings(nn.Module):
         else:
             lang_emb = torch.mean(self.language_emb.weight, dim=0)
 
-        return lang_emb.view(-1)
+        return lang_emb.view(-1), None
