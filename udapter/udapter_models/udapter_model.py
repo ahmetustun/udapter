@@ -137,7 +137,7 @@ class UdapterModel(Model):
         loss = 0
         if self.typo_predict:
             loss += typo_loss
-            logger.info(f"typo/loss: {typo_loss}, typo/acc: {typo_acc}")
+        #   logger.info(f"typo/loss: {typo_loss}, typo/acc: {typo_acc}")
         # Run through each of the tasks on the shared encoder and save predictions
         for task in self.tasks:
             if self.scalar_mix:
@@ -246,6 +246,10 @@ class UdapterModel(Model):
         metrics = {name: task_metric
                    for task in self.tasks
                    for name, task_metric in self.decoders[task].get_metrics(reset).items()}
+
+        # add typo prediction metric
+        if self.typo_predict:
+            metrics.update(self.language_embedder.get_accuracy())
 
         # The "sum" metric summing all tracked metrics keeps a good measure of patience for early stopping and saving
         metrics_to_track = {"upos", "xpos", "feats", "lemmas", "LAS", "UAS"}

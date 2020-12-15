@@ -69,7 +69,7 @@ class LanguageMLP(nn.Module):
         loss, binary_acc = None, None
         if self.config.typo_mask:
             loss, probs = self._decode_feats(lang_emb, masked_indexes, unmasked_lang_vector)
-            binary_acc = self._get_accuracy(unmasked_lang_vector[masked_indexes], probs[masked_indexes])
+            binary_acc = self._calculate_accuracy(unmasked_lang_vector[masked_indexes], probs[masked_indexes])
 
         return lang_emb, (loss, binary_acc)
 
@@ -84,7 +84,7 @@ class LanguageMLP(nn.Module):
 
         return loss, probs
 
-    def _get_accuracy(self, y_true, y_prob):
+    def _calculate_accuracy(self, y_true, y_prob):
         assert len(y_true.shape) == 1 and y_true.shape == y_prob.shape
         y_prob = y_prob > 0.5
         return (y_true == y_prob.float()).sum().item() / y_true.shape[0]
@@ -99,6 +99,12 @@ class LanguageMLP(nn.Module):
             self.update_embs = True
 
         return self.lang_emb, (self.loss, self.accuracy)
+
+    def get_accuracy(self):
+        main_metrics = {
+            f".run/typo/acc": self.accuracy
+        }
+        return {**main_metrics}
 
     def _encode_language_ids(self, language_id: int) -> List[int]:
 
