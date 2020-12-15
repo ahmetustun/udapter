@@ -30,6 +30,7 @@
     "word_dropout": 0.2,
     "layer_dropout": 0.1,
     "tasks": ["deps"],
+    "typo_predict": true,
     "text_field_embedder": {
       "type": "udify_embedder",
       "dropout": 0.5,
@@ -57,11 +58,14 @@
           "language_emb_size": 32,
           "language_emb_dropout": 0.1,
           "language_one_hot": false,
-          "num_language_features": 289,
+          "num_language_features": 588,
           "language_drop_rate": 0.2,
-	      "language_features": "syntax_knn+phonology_knn+inventory_knn",
+	      "language_features": "syntax_knn+phonology_knn+inventory_knn+geo",
           "num_languages": 5,
-          "language_emb_from_features": true
+          "language_emb_from_features": true,
+          "typo_mask": true,
+          "typo_mask_ratio": 0.3,
+          "typo_loss_weight": 0.5
 	}
       }
     },

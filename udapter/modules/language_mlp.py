@@ -41,8 +41,7 @@ class LanguageMLP(nn.Module):
         self.update_embs = True
         self.lang_emb = None
         self.loss = None
-        self.predicted_lang_vector = None
-        self.masked_lang_vector = None
+        self.accuracy = None
 
     def forward(self, lang_ids):
 
@@ -56,19 +55,23 @@ class LanguageMLP(nn.Module):
         # mask typological feature vector
         mask, masked_indexes = None, None
         if self.config.typo_mask:
-            mask, masked_indexes = self._mask_features(len(lang_vector), self.config.typo_mask_ratio)
-            lang_vector = (~mask).float() * lang_vector
+            # number of geo feats = 299
+            num_geo_feats = 299 if 'geo' in self.config.language_features else 0
+            mask, masked_indexes = self._mask_features(len(lang_vector)-num_geo_feats, self.config.typo_mask_ratio)
+            mask = torch.cat((mask, torch.zeros(num_geo_feats).byte()))
+            lang_vector = (~mask).float().to(lang_ids.device) * lang_vector
 
         lang_emb = self.nonlinear_project(lang_vector)
         lang_emb = self.activation(lang_emb)
         lang_emb = self.down_project(lang_emb)
         lang_emb = self.dropout(lang_emb)
 
-        loss, predicted = None, None
+        loss, binary_acc = None, None
         if self.config.typo_mask:
-            loss, predicted = self._decode_feats(lang_emb, masked_indexes, unmasked_lang_vector)
+            loss, probs = self._decode_feats(lang_emb, masked_indexes, unmasked_lang_vector)
+            binary_acc = self._get_accuracy(unmasked_lang_vector[masked_indexes], probs[masked_indexes])
 
-        return lang_emb, (loss, lang_vector, predicted)
+        return lang_emb, (loss, binary_acc)
 
     def _decode_feats(self, lang_emb, masked_indexes, lang_vector):
         hidden = self.activation(self.up_project(lang_emb))
@@ -77,21 +80,25 @@ class LanguageMLP(nn.Module):
         loss = self.loss_fct(hidden[masked_indexes], lang_vector[masked_indexes])
         loss = loss * self.config.typo_loss_weight
 
-        predicted = F.sigmoid(hidden)
-        predicted = torch.where(predicted > 0.5, torch.ones_like(predicted), torch.zeros_like(predicted))
+        probs = F.sigmoid(hidden)
 
-        return loss, predicted
+        return loss, probs
+
+    def _get_accuracy(self, y_true, y_prob):
+        assert len(y_true.shape) == 1 and y_true.shape == y_prob.shape
+        y_prob = y_prob > 0.5
+        return (y_true == y_prob.float()).sum().item() / y_true.shape[0]
 
     def get_language_emb(self, lang_ids, update=False):
 
         if self.update_embs:
-            self.lang_emb, (self.loss, self.masked_lang_vector, self.predicted_lang_vector) = self.forward(lang_ids)
+            self.lang_emb, (self.loss, self.accuracy) = self.forward(lang_ids)
             self.update_embs = False
 
         if update:
             self.update_embs = True
 
-        return self.lang_emb, (self.loss, self.masked_lang_vector, self.predicted_lang_vector)
+        return self.lang_emb, (self.loss, self.accuracy)
 
     def _encode_language_ids(self, language_id: int) -> List[int]:
 

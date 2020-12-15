@@ -121,7 +121,7 @@ class UdapterModel(Model):
         self._apply_token_dropout(tokens)
 
         embedded_text_input = self.text_field_embedder(tokens)
-        language_emb, (typo_loss, masked_lang_vector, predicted_lang_vector) = self.language_embedder.get_language_emb(next(iter(tokens['bert-lang-ids'])), update=True)
+        language_emb, (typo_loss, typo_acc) = self.language_embedder.get_language_emb(next(iter(tokens['bert-lang-ids'])), update=True)
 
         language_emb = language_emb.to(embedded_text_input.device)
 
@@ -137,7 +137,7 @@ class UdapterModel(Model):
         loss = 0
         if self.typo_predict:
             loss += typo_loss
-
+            logger.info(f"typo/loss: {typo_loss}, typo/acc: {typo_acc}")
         # Run through each of the tasks on the shared encoder and save predictions
         for task in self.tasks:
             if self.scalar_mix:
