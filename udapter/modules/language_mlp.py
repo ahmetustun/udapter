@@ -47,7 +47,9 @@ class LanguageMLP(nn.Module):
     def forward(self, lang_ids):
 
         lang_vector = self._encode_language_ids(lang_ids)
-        unmasked_lang_vector = torch.tensor(lang_vector).to(lang_ids.device)
+
+        if self.training:
+            unmasked_lang_vector = torch.tensor(lang_vector).to(lang_ids.device)
 
         # mask typological feature vector
         mask, masked_indexes = torch.ones(len(lang_vector)), None
@@ -67,8 +69,8 @@ class LanguageMLP(nn.Module):
         lang_emb = self.down_project(lang_emb)
         lang_emb = self.dropout(lang_emb)
 
-        loss, binary_acc = None, None
-        if self.config.typo_mask:
+        loss, binary_acc = 0, 0
+        if self.config.typo_mask and self.training:
             loss, probs = self._decode_feats(lang_emb, masked_indexes, unmasked_lang_vector)
             binary_acc = self._calculate_accuracy(unmasked_lang_vector[masked_indexes], probs[masked_indexes])
 
