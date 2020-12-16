@@ -25,7 +25,8 @@ class LanguageMLP(nn.Module):
         l2v.LETTER_CODES_FILE = letter_codes
         l2v.LETTER_CODES = json.load(open(letter_codes))
 
-        self.l2v_cache = dict()
+        self.l2v_cache_knn = dict()
+        self.l2v_cache_avg = dict()
         self._cache_language_features()
 
         nl_project = config.nl_project
@@ -48,18 +49,18 @@ class LanguageMLP(nn.Module):
         lang_vector = self._encode_language_ids(lang_ids)
         unmasked_lang_vector = torch.tensor(lang_vector).to(lang_ids.device)
 
-        # replace 0's with -1's
-        lang_vector = [-1.0 if f == 0.0 else f for f in lang_vector]
-        lang_vector = torch.tensor(lang_vector).to(lang_ids.device)
-
         # mask typological feature vector
-        mask, masked_indexes = None, None
+        mask, masked_indexes = torch.ones(len(lang_vector)), None
         if self.config.typo_mask:
             # number of geo feats = 299
             num_geo_feats = 299 if 'geo' in self.config.language_features else 0
-            mask, masked_indexes = self._mask_features(len(lang_vector)-num_geo_feats, self.config.typo_mask_ratio)
+            mask, masked_indexes = self._mask_features(lang_vector[:len(lang_vector)-num_geo_feats], self.config.typo_mask_ratio)
             mask = torch.cat((mask, torch.zeros(num_geo_feats).byte()))
-            lang_vector = (~mask).float().to(lang_ids.device) * lang_vector
+
+        # replace 0's with -1's
+        lang_vector = [-1.0 if f == 0.0 else 1.0 for f in lang_vector]
+        lang_vector = torch.tensor(lang_vector).to(lang_ids.device)
+        lang_vector = (~mask).float().to(lang_ids.device) * lang_vector
 
         lang_emb = self.nonlinear_project(lang_vector)
         lang_emb = self.activation(lang_emb)
@@ -120,7 +121,11 @@ class LanguageMLP(nn.Module):
             one_hot[language_id + 1] = 1
 
         # feature vector from lang2vec cache
-        features = self.l2v_cache[self.in_language_list[language_id] if language_id < 1000 else self.oov_language_list[language_id-1000]]
+        lang_str = self.in_language_list[language_id] if language_id < 1000 else self.oov_language_list[language_id-1000]
+        if self.training:
+            features = self.l2v_cache_knn[lang_str]
+        else:
+            features = self.l2v_cache_avg[lang_str]
 
         features = features if not self.do_onehot else one_hot + features
 
@@ -128,14 +133,22 @@ class LanguageMLP(nn.Module):
 
     def _cache_language_features(self):
 
-        features = dict()
+        features_knn = dict()
+        features_avg = dict()
         for lang in self.in_language_list + self.oov_language_list:
-            features[lang] = l2v.get_features(l2v.LETTER_CODES[lang], self.config.language_features)[l2v.LETTER_CODES[lang]]
-        self.l2v_cache = features
+            features_knn[lang] = l2v.get_features(l2v.LETTER_CODES[lang], self.config.language_features)[l2v.LETTER_CODES[lang]]
+            features_avg[lang] = l2v.get_features(l2v.LETTER_CODES[lang], self.config.language_features.replace('knn', 'average'))[
+                l2v.LETTER_CODES[lang]]
+        self.l2v_cache_knn = features_knn
+        self.l2v_cache_avg = features_avg
 
-    def _mask_features(self, feats_len, masking_ratio):
+    def _mask_features(self, feats, masking_ratio):
         # TODO: use typological heuristics for masking
-        mask = torch.rand(feats_len) > (1 - masking_ratio)
+
+        if self.training:
+            mask = torch.rand(len(feats)) > (1 - masking_ratio)
+        else:
+            mask = torch.tensor([0 if f != '--' else 1 for f in feats]).byte()
         masked_indexes = torch.flatten(torch.nonzero(mask))
 
         return mask, masked_indexes
