@@ -29,6 +29,10 @@ class LanguageMLP(nn.Module):
 
         nl_project = config.nl_project
         in_features = len(self.in_language_list) + 1 + config.num_language_features if self.do_onehot else config.num_language_features
+
+        # number of geo feats = 299
+        self.num_geo_feats = 299 if 'geo' in self.config.language_features else 0
+
         self.nonlinear_project = nn.Linear(in_features, nl_project)
         self.down_project = nn.Linear(nl_project, config.low_rank_dim)
         self.activation = F.relu
@@ -52,13 +56,11 @@ class LanguageMLP(nn.Module):
         # mask typological feature vector
         mask, masked_indexes = torch.ones(len(lang_vector)), None
         if self.config.typo_mask:
-            # number of geo feats = 299
-            num_geo_feats = 299 if 'geo' in self.config.language_features else 0
-            mask, masked_indexes = self._mask_features(lang_vector[:len(lang_vector)-num_geo_feats], self.config.typo_mask_ratio)
-            mask = torch.cat((mask, torch.zeros(num_geo_feats).byte()))
+            mask, masked_indexes = self._mask_features(lang_vector[:len(lang_vector)-self.num_geo_feats], self.config.typo_mask_ratio)
+            mask = torch.cat((mask, torch.zeros(self.num_geo_feats).byte()))
 
         # replace 0's with -1's
-        lang_vector = [-1.0 if f == 0.0 else f for f in lang_vector]
+        lang_vector[:len(lang_vector)-self.num_geo_feats] = [-1.0 if f == 0.0 else 1 for f in lang_vector[:len(lang_vector)-self.num_geo_feats]]
         lang_vector = torch.tensor(lang_vector).to(lang_ids.device)
         lang_vector = (~mask).float().to(lang_ids.device) * lang_vector
 
