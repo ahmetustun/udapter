@@ -5,8 +5,6 @@ import lang2vec.lang2vec as l2v
 
 from typing import List
 
-import numpy as np
-
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
@@ -60,7 +58,7 @@ class LanguageMLP(nn.Module):
             mask = torch.cat((mask, torch.zeros(num_geo_feats).byte()))
 
         # replace 0's with -1's
-        lang_vector = [-1.0 if f == 0.0 else 1.0 for f in lang_vector]
+        lang_vector = [-1.0 if f == 0.0 else f for f in lang_vector]
         lang_vector = torch.tensor(lang_vector).to(lang_ids.device)
         lang_vector = (~mask).float().to(lang_ids.device) * lang_vector
 

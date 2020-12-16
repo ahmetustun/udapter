@@ -7,28 +7,35 @@ if len(sys.argv) < 2:
     exit(1)
 
 
+task = sys.argv[2]
+
 las_results = dict()
 uas_results = dict()
 
+if task == 'feats':
+    suffix = 'feats.json'
+else:
+    suffix = '.json'
+
 prefix = 'test.conllu_'
-#suffix = '.json'
-suffix = 'feats.json'
 log_dir = sys.argv[1]
 
 for f in os.listdir(log_dir):
     if f.startswith(prefix) and f.endswith(suffix):
         lang = f.split(prefix)[1].split(suffix)[0]
         with open(os.path.join(log_dir,f)) as j:
-            scores = j.readline().rstrip().split('\t')
-            acc = scores[0]
-            f1 = scores[1]
-            las_results[lang] = acc
-            uas_results[lang] = f1
-            #data = json.load(j)
-            #las = data['LAS']['aligned_accuracy']
-            #uas = data['UAS']['aligned_accuracy']
-            #las_results[lang] = float(las)*100
-            #uas_results[lang] = float(uas)*100
+            if task == 'feats':
+                scores = j.readline().rstrip().split('\t')
+                acc = scores[0]
+                f1 = scores[1]
+                las_results[lang] = acc
+                uas_results[lang] = f1
+            else:
+                data = json.load(j)
+                las = data['LAS']['aligned_accuracy']
+                uas = data['UAS']['aligned_accuracy']
+                las_results[lang] = float(las)*100
+                uas_results[lang] = float(uas)*100
 
 las_results = {k: v for k, v in sorted(las_results.items(), key=lambda item: item[0])}
 uas_results = {k: v for k, v in sorted(uas_results.items(), key=lambda item: item[0])}
