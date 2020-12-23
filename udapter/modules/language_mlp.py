@@ -143,7 +143,7 @@ class LanguageMLP(nn.Module):
         missing_feats = dict()
         for lang in self.in_language_list + self.oov_language_list:
             features_knn[lang] = l2v.get_features(l2v.LETTER_CODES[lang], self.config.language_features)[l2v.LETTER_CODES[lang]]
-            features_un = l2v.get_features(l2v.LETTER_CODES[lang], 'syntax_wals|syntax_sswl|syntax_ethnologue+phonology_wals|phonology_ethnologue+inventory_ethnologue|inventory_phoible_aa|inventory_phoible_gm|inventory_phoible_saphon|inventory_phoible_spa|inventory_phoible_ph|inventory_phoible_ra|inventory_phoible_upsid+geo')
+            features_un[lang] = l2v.get_features(l2v.LETTER_CODES[lang], 'syntax_wals|syntax_sswl|syntax_ethnologue+phonology_wals|phonology_ethnologue+inventory_ethnologue|inventory_phoible_aa|inventory_phoible_gm|inventory_phoible_saphon|inventory_phoible_spa|inventory_phoible_ph|inventory_phoible_ra|inventory_phoible_upsid+geo')
             features_avg[lang] = l2v.get_features(l2v.LETTER_CODES[lang], self.config.language_features.replace('knn', 'average'))[l2v.LETTER_CODES[lang]]
             missing_feats[lang] = [1 if f == '--' else 0 for f in features_un[lang]]
         self.l2v_cache_knn = features_knn
