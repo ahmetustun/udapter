@@ -135,7 +135,8 @@ class UdapterModel(Model):
         output_dict = {"logits": logits,
                        "class_probabilities": class_probabilities}
         loss = 0
-
+        if self.typo_predict:
+            loss += typo_loss
         # Run through each of the tasks on the shared encoder and save predictions
         for task in self.tasks:
             if self.scalar_mix:
@@ -163,8 +164,6 @@ class UdapterModel(Model):
                 loss += pred_output["loss"]
 
         if gold_tags:
-            if self.typo_predict:
-                loss += typo_loss
             output_dict["loss"] = loss
 
         if metadata is not None:
