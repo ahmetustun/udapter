@@ -23,7 +23,6 @@ class LanguageMLP(nn.Module):
         l2v.LETTER_CODES_FILE = letter_codes
         l2v.LETTER_CODES = json.load(open(letter_codes))
 
-        self.l2v_cache_un = dict()
         self.l2v_cache_avg = dict()
         self.l2v_cache_missing = dict()
         self._cache_language_features()
@@ -49,7 +48,7 @@ class LanguageMLP(nn.Module):
 
     def forward(self, lang_ids):
 
-        lang_vector = self._encode_language_ids(lang_ids)
+        lang_vector, missing_feats = self._encode_language_ids(lang_ids)
 
         if self.training:
             unmasked_lang_vector = torch.tensor(lang_vector).to(lang_ids.device)
@@ -57,7 +56,7 @@ class LanguageMLP(nn.Module):
         # mask typological feature vector
         mask, masked_indexes = torch.ones(len(lang_vector)), None
         if self.config.typo_mask:
-            mask, masked_indexes = self._mask_features(lang_vector[:len(lang_vector)-self.num_geo_feats], self.config.typo_mask_ratio)
+            mask, masked_indexes = self._mask_features(missing_feats[:len(lang_vector)-self.num_geo_feats], self.config.typo_mask_ratio)
             mask = torch.cat((mask, torch.zeros(self.num_geo_feats).byte()))
 
         # replace 0's with -1's
@@ -128,7 +127,7 @@ class LanguageMLP(nn.Module):
         if self.training:
             features = self.l2v_cache_knn[lang_str]
         else:
-            features = self.l2v_cache_un[lang_str]
+            features = self.l2v_cache_avg[lang_str]
 
         features = features if not self.do_onehot else one_hot + features
         missing_feats = self.l2v_cache_missing[lang_str]
@@ -138,16 +137,13 @@ class LanguageMLP(nn.Module):
     def _cache_language_features(self):
 
         features_knn = dict()
-        features_un = dict()
         features_avg = dict()
         missing_feats = dict()
         for lang in self.in_language_list + self.oov_language_list:
             features_knn[lang] = l2v.get_features(l2v.LETTER_CODES[lang], self.config.language_features)[l2v.LETTER_CODES[lang]]
-            features_un[lang] = l2v.get_features(l2v.LETTER_CODES[lang], 'syntax_wals|syntax_sswl|syntax_ethnologue+phonology_wals|phonology_ethnologue+inventory_ethnologue|inventory_phoible_aa|inventory_phoible_gm|inventory_phoible_saphon|inventory_phoible_spa|inventory_phoible_ph|inventory_phoible_ra|inventory_phoible_upsid+geo')
             features_avg[lang] = l2v.get_features(l2v.LETTER_CODES[lang], self.config.language_features.replace('knn', 'average'))[l2v.LETTER_CODES[lang]]
-            missing_feats[lang] = [1 if f == '--' else 0 for f in features_un[lang]]
+            missing_feats[lang] = [1 if f == '--' else 0 for f in features_avg[lang]]
         self.l2v_cache_knn = features_knn
-        self.l2v_cache_un = features_un
         self.l2v_cache_avg = features_avg
         self.l2v_cache_missing = missing_feats
 
