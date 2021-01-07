@@ -55,14 +55,17 @@ class LanguageMLP(nn.Module):
 
         # mask typological feature vector
         mask, masked_indexes = torch.ones(len(lang_vector)), None
-        if self.config.typo_mask or self.config.typo_missing_out:
+        if self.config.typo_mask or self.config.typo_missing_out or self.config.eval_with_knn:
             mask, masked_indexes = self._mask_features(missing_feats[:len(lang_vector)-self.num_geo_feats], self.config.typo_mask_ratio)
             mask = torch.cat((mask, torch.zeros(self.num_geo_feats).byte()))
 
         # replace 0's with -1's
         lang_vector = [-1.0 if (f == 0.0 or f == '--') else f for f in lang_vector]
         lang_vector = torch.tensor(lang_vector).to(lang_ids.device)
-        lang_vector = (~mask).float().to(lang_ids.device) * lang_vector
+        if (not self.training) and self.config.eval_with_knn:
+            lang_vector[masked_indexes] = lang_vector[masked_indexes]/2
+        else:
+            lang_vector = (~mask).float().to(lang_ids.device) * lang_vector
 
         lang_emb = self.nonlinear_project(lang_vector)
         lang_emb = self.activation(lang_emb)
@@ -124,7 +127,7 @@ class LanguageMLP(nn.Module):
 
         # feature vector from lang2vec cache
         lang_str = self.in_language_list[language_id] if language_id < 1000 else self.oov_language_list[language_id-1000]
-        if self.training:
+        if self.training or self.config.eval_with_knn:
             features = self.l2v_cache_knn[lang_str]
         else:
             features = self.l2v_cache_avg[lang_str]
