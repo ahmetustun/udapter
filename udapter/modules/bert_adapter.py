@@ -623,6 +623,7 @@ class UdifyPretrainedBertEmbedder(BertEmbedder):
                  language_emb_from_features: bool = True,
                  l2v_letter_codes: str ='languages/letter_codes.json',
                  typo_mask: bool = False,
+                 typo_missing_out: bool = False,
                  typo_mask_ratio: float = 0.3,
                  typo_loss_weight: float = 0.5) -> None:
 
@@ -644,6 +645,7 @@ class UdifyPretrainedBertEmbedder(BertEmbedder):
         bert_config.nl_project = nonlinear_project
 
         bert_config.typo_mask = typo_mask
+        bert_config.typo_missing_out = typo_missing_out
         bert_config.typo_mask_ratio = typo_mask_ratio
         bert_config.typo_loss_weight = typo_loss_weight
 

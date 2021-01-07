@@ -55,7 +55,7 @@ class LanguageMLP(nn.Module):
 
         # mask typological feature vector
         mask, masked_indexes = torch.ones(len(lang_vector)), None
-        if self.config.typo_mask:
+        if self.config.typo_mask or self.config.typo_missing_out:
             mask, masked_indexes = self._mask_features(missing_feats[:len(lang_vector)-self.num_geo_feats], self.config.typo_mask_ratio)
             mask = torch.cat((mask, torch.zeros(self.num_geo_feats).byte()))
 
@@ -151,7 +151,7 @@ class LanguageMLP(nn.Module):
         # TODO: use typological heuristics for masking
 
         missing = torch.tensor(missing_feats).byte()
-        if self.training:
+        if self.training and self.config.typo_mask:
             mask = torch.rand(len(missing_feats)) > (1 - masking_ratio)
             mask = (mask.float() * (~missing).float()).byte()
         else:
