@@ -608,6 +608,7 @@ class UdifyPretrainedBertEmbedder(BertEmbedder):
                  layer_dropout: float = 0.1,
                  combine_layers: str = "mix",
                  use_adapter: bool = True,
+                 adapter_config: str = "houlsby",
                  adapter_size: int = 64,
                  adapter_prediction: str = "single",
                  num_adapters: int = 1,
@@ -631,6 +632,7 @@ class UdifyPretrainedBertEmbedder(BertEmbedder):
         bert_config = BertConfig.from_json_file(bert_config_file)
 
         bert_config.use_adapter = use_adapter
+        bert_config.adapter_config = adapter_config
         bert_config.adapter_size = adapter_size
         bert_config.adapter_prediction = adapter_prediction
         bert_config.num_adapters = num_adapters

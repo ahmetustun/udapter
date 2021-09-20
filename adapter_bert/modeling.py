@@ -362,7 +362,7 @@ class BertSelfOutput(nn.Module):
     def forward(self, hidden_states, input_tensor, adapter_idx=None, lang_emb=None):
         hidden_states = self.dense(hidden_states)
         hidden_states = self.dropout(hidden_states)
-        if self.adapter is not None:
+        if self.config.adapter_config == 'houlsby' and self.adapter is not None:
             if self.config.num_adapters > 1:
                 if self.adapter_prediction == 'average':
                     hidden_states = sum([self.adapter[idx](hidden_states) for idx in range(len(self.adapter))]) / len(self.adapter)
